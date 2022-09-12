@@ -54,8 +54,8 @@ jobs:
             az deployment sub what-if \
               --name ${{ github.run_id }} \
               --template-file ${{ env.WORKDIR }}/main.bicep \
-              --location "${{ secrets.LOCATION }}" \
-              --parameters resourcesPrefix=${{ steps.resources_prefix.outputs.result }} > whatif
+              --parameters resourcesPrefix=${{ steps.resources_prefix.outputs.result }} \
+              --location ${{ secrets.LOCATION }} > whatif
               
       # Create string output of Whatif
       - name: Create String Output
