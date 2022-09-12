@@ -12,11 +12,6 @@ on:
 env:
   DOTNET_VERSION: "3.1.x"
 
-# Set defaults for GitHub Actions runner
-defaults:
-  run:
-    working-directory: "apis/poi"
-
 jobs:
   buildtest:
     name: "Build and Test"
