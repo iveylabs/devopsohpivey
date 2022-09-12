@@ -55,13 +55,13 @@ jobs:
               --name ${{ github.run_id }} \
               --template-file ${{ env.WORKDIR }}/main.bicep \
               --parameters resourcesPrefix=${{ steps.resources_prefix.outputs.result }} \
-              --location ${{ secrets.LOCATION }} > whatif
+              --location ${{ secrets.LOCATION }} > ${{ env.WORKDIR }}/whatif
               
       # Create string output of Whatif
       - name: Create String Output
         id: whatif-string
         run: |
-          WHATIF=$(cat whatif)
+          WHATIF=$(cat ${{ env.WORKDIR }}/whatif)
           echo "## Bicep What-If Output" >> whatif.string
           echo "<details><summary>Click to expand</summary>" >> whatif.string
           echo "" >> whatif.string
