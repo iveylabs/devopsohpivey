@@ -1,0 +1,124 @@
+name: "Deploy - IaC (Terraform)"
+
+# run on push to main branch only
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "iac/terraform/**"
+  workflow_dispatch:
+
+# Using env secrets is the preferred approach for CI/CD tools
+env:
+  ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
+  ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
+  ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+  ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
+  WORKDIR: "iac/terraform"
+  # RESOURCES_PREFIX: "" # hardcoded or dynamic based on repo name
+  # LOCATION: "" # hardcoded or get from secrets
+
+# Set defaults for GitHub Actions runner
+defaults:
+  run:
+    working-directory: "iac/terraform"
+
+jobs:
+  preview:
+    name: "Preview Changes"
+    runs-on: ubuntu-latest
+    outputs:
+      TFPLAN_EXITCODE: ${{ steps.tfplan.outputs.exitcode }}
+      RESOURCES_PREFIX: ${{ steps.resources_prefix.outputs.result }}
+
+    steps:
+      # Checkout the repository to the GitHub Actions runner
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      # Get RESOURCES_PREFIX based on the repo name
+      - name: Get repo name
+        uses: actions/github-script@v5
+        id: resources_prefix
+        with:
+          result-encoding: string
+          script: return context.repo.repo.toLowerCase()
+
+      # Install the latest version of Terraform CLI
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+
+      # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
+      - name: Terraform Init
+        run: terraform init -backend-config=resource_group_name="${{ secrets.TFSTATE_RESOURCES_GROUP_NAME }}" \
+          -backend-config=storage_account_name="${{ secrets.TFSTATE_STORAGE_ACCOUNT_NAME }}" \
+          -backend-config=container_name="${{ secrets.TFSTATE_STORAGE_CONTAINER_NAME }}" \
+          -backend-config=key="${{ secrets.TFSTATE_KEY }}" \
+
+      # Generates an execution plan for Terraform
+      # An exit code of 2 indicates there were changes detected and will throw an error on GitHub Action. "|| exit 0" overrides it. Just continue for now, we'll check next step
+      - name: Terraform Plan
+        run: terraform plan -detailed-exitcode \
+          -var="location=${{ secrets.LOCATION }}" \
+          -var="resources_prefix=${{ steps.resources_prefix.outputs.result }}" \
+          -out tfplan || exit 0
+        id: tfplan
+      
+      # Save plan to artifacts  
+      - name: Publish Terraform Plan
+        uses: actions/upload-artifact@v2
+        with:
+          name: tfplan
+          path: tfplan
+
+      # Create string output of Terraform Plan
+      - name: Create String Output
+        id: tf-plan-string
+        run: |
+          TERRAFORM_PLAN=$(terraform show -no-color tfplan)
+          echo "## Terraform Plan Output" >> tf.string
+          echo "<details><summary>Click to expand</summary>" >> tf.string
+          echo "" >> tf.string
+          echo '```terraform' >> tf.string
+          echo "$TERRAFORM_PLAN" >> tf.string
+          echo '```' >> tf.string
+          echo "</details>" >> tf.string
+
+          SUMMARY=$(cat tf.string)
+          SUMMARY="${SUMMARY//'%'/'%25'}"
+          SUMMARY="${SUMMARY//$'\n'/'%0A'}"
+          SUMMARY="${SUMMARY//$'\r'/'%0D'}"
+
+          echo "::set-output name=summary::$SUMMARY"
+
+#  deploy:
+#    name: "Deploy"
+#    needs: preview
+#    if: needs.preview.outputs.TFPLAN_EXITCODE == 2 # it is not part of the challenge, but nice to have
+#    runs-on: ubuntu-latest
+#    environment: production
+#
+#    steps:
+#      # Checkout the repository to the GitHub Actions runner
+#      - name: Checkout
+#        uses: actions/checkout@v2
+#
+#      # Login to Azure with Service Principal
+#      # This step is not required by Terraform itself, but Terraform code contains resources with "az" commands to execute on agent locally.
+#      - name: Azure Login
+#        uses: Azure/login@v1
+#        with:
+#          creds: ${{ secrets.AZURE_CREDENTIALS }}
+#
+#      # Install the latest version of Terraform CLI
+#      - name: Setup Terraform
+#        uses: hashicorp/setup-terraform@v1
+#
+#      # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
+#      - name: Terraform Init
+#        run: terraform init -backend-config=resource_group_name="${{ secrets.TFSTATE_RESOURCES_GROUP_NAME }}" -backend-config=storage_account_name="${{ secrets.TFSTATE_STORAGE_ACCOUNT_NAME }}" -backend-config=container_name="${{ secrets.TFSTATE_STORAGE_CONTAINER_NAME }}" -backend-config=key="${{ secrets.TFSTATE_KEY }}"
+#
+#      # Terraform Apply
+#      - name: Terraform Apply
+#        run: terraform apply -auto-approve -var="location=${{ secrets.LOCATION }}" -var="resources_prefix=${{ needs.preview.outputs.RESOURCES_PREFIX }}"
