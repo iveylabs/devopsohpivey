@@ -59,13 +59,6 @@ jobs:
       - name: Terraform Plan
         run: terraform plan -detailed-exitcode -var="location=${{ secrets.LOCATION }}" -var="resources_prefix=${{ steps.resources_prefix.outputs.result }}" -out tfplan || exit 0
         id: tfplan
-      
-      # Save plan to artifacts  
-      - name: Publish Terraform Plan
-        uses: actions/upload-artifact@v2
-        with:
-          name: tfplan
-          path: iac/terraform/tfplan
 
       # Create string output of Terraform Plan
       - name: Create String Output
@@ -97,7 +90,7 @@ jobs:
    needs: preview
    if: needs.preview.outputs.TFPLAN_EXITCODE == 2 # it is not part of the challenge, but nice to have
    runs-on: ubuntu-latest
-   environment: IaC-Production
+   environment: IaC Production
 
    steps:
      # Checkout the repository to the GitHub Actions runner
@@ -118,13 +111,7 @@ jobs:
      # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
      - name: Terraform Init
        run: terraform init -backend-config=resource_group_name="${{ secrets.TFSTATE_RESOURCES_GROUP_NAME }}" -backend-config=storage_account_name="${{ secrets.TFSTATE_STORAGE_ACCOUNT_NAME }}" -backend-config=container_name="${{ secrets.TFSTATE_STORAGE_CONTAINER_NAME }}" -backend-config=key="${{ secrets.TFSTATE_KEY }}"
-     
-     # Download saved plan from artifacts  
-     - name: Download Terraform Plan
-       uses: actions/download-artifact@v2
-       with:
-         name: tfplan
-     
+
      # Terraform Apply
      - name: Terraform Apply
-       run: terraform apply -auto-approve tfplan
+       run: terraform apply -auto-approve -var="location=${{ secrets.LOCATION }}" -var="resources_prefix=${{ needs.preview.outputs.RESOURCES_PREFIX }}"
