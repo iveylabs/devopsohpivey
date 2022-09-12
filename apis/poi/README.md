@@ -1,4 +1,3 @@
-Testing POI code owners
 # POI Service
 
 ## Overview
