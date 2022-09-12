@@ -1,0 +1,86 @@
+name: "Deploy - IaC (Bicep)"
+
+# run on push to main branch only
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "iac/bicep/**"
+  workflow_dispatch:
+
+# Set envs
+env:
+  WORKDIR: "iac/bicep"
+  # RESOURCES_PREFIX: "" # hardcoded or dynamic based on repo name
+  # LOCATION: "" # hardcoded or get from secrets
+
+# Set defaults for GitHub Actions runner
+defaults:
+  run:
+    working-directory: "iac/bicep"
+
+jobs:
+  preview:
+    name: "Preview Changes"
+    runs-on: ubuntu-latest
+    outputs:
+      RESOURCES_PREFIX: ${{ steps.resources_prefix.outputs.result }}
+
+    steps:
+      # Checkout the repository to the GitHub Actions runner
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      # Get RESOURCES_PREFIX based on the repo name
+      - name: Get repo name
+        uses: actions/github-script@v5
+        id: resources_prefix
+        with:
+          result-encoding: string
+          script: return context.repo.repo.toLowerCase()
+
+      # Login to Azure with Service Principal
+      - name: "Login to Azure"
+        uses: Azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # Preview changes
+      - name: "What-If"
+        uses: Azure/cli@v1
+        with:
+          inlineScript: |
+            az deployment sub what-if \
+              --name ${{ github.run_id }} \
+              --template-file ${{ env.WORKDIR }}/main.bicep \
+              --location "${{ secrets.LOCATION }}" \
+              --parameters resourcesPrefix=${{ steps.resources_prefix.outputs.result }}
+
+  deploy:
+    name: "Deploy"
+    needs: preview
+    runs-on: ubuntu-latest
+    environment: 'IaC Production'
+
+    steps:
+      # Checkout the repository to the GitHub Actions runner
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      # Login to Azure with Service Principal
+      - name: "Azure Login"
+        uses: Azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # Deploy
+      - name: "Deployment"
+        uses: Azure/cli@v1
+        with:
+          inlineScript: |
+            az deployment sub create \
+              --name ${{ github.run_id }} \
+              --template-file ${{ env.WORKDIR }}/main.bicep \
+              --location "${{ secrets.LOCATION }}" \
+              --parameters resourcesPrefix=${{ needs.preview.outputs.RESOURCES_PREFIX }}
