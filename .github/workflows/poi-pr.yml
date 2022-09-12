@@ -1,0 +1,142 @@
+name: "PR - API - POI (.NET Core)"
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "apis/poi/**"
+  workflow_dispatch:
+
+# Set envs
+env:
+  DOTNET_VERSION: "3.1.x"
+
+# Set defaults for GitHub Actions runner
+defaults:
+  run:
+    working-directory: "apis/poi"
+
+jobs:
+  buildtest:
+    name: "Build and Test"
+    runs-on: ubuntu-latest
+    outputs:
+      test_results: ${{ steps.unittestoutput.outputs.test_results }}
+      test_outcome: ${{ steps.unittestoutput.outputs.test_outcome }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: "Setup .NET Core ${{ env.DOTNET_VERSION }}"
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: "Restore dependencies"
+        run: dotnet restore
+
+      - name: "Build the App"
+        run: dotnet build --no-restore
+
+      - name: "Run Unit Tests"
+        id: unittest
+        run: |
+          dotnet test --no-build --filter "FullyQualifiedName~UnitTest" |& tee test_results.txt
+
+          # break if 'dotnet test' failed
+          test ${PIPESTATUS[0]} -eq 0
+        continue-on-error: true
+
+      - name: "Transform Unit Tests output"
+        id: unittestoutput
+        if: steps.unittest.outcome == 'failure'
+        run: |
+          test_results=$(cat test_results.txt)
+          test_results="${test_results//'%'/'%25'}"
+          test_results="${test_results//$'\n'/'%0A'}"
+          test_results="${test_results//$'\r'/'%0D'}"
+          echo "::set-output name=test_results::${test_results}"
+          echo "::set-output name=test_outcome::${{ steps.unittest.outcome }}"
+
+  reportbug:
+    name: "Report Bug for non PR runs"
+    needs: buildtest
+    if: needs.buildtest.outputs.test_outcome == 'failure' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Create an issue (bug)"
+        uses: actions/github-script@v5.0.0
+        env:
+          UNIT_TEST_RESULTS: "${{ needs.buildtest.outputs.test_results }}"
+        with:
+          script: |
+            const body = `#### Unit Tests \`${{ needs.buildtest.outputs.test_outcome }}\`
+            <details>
+            <summary>Workflow details</summary>\n
+            Workflow name - \`${{ github.workflow }}\`
+            Action - \`${{ github.event_name }}\`
+            Job - \`${{ github.job }}\`
+            PR - #${{ github.event.number }}
+            </details>\n
+            <details>
+            <summary>Unit Tests details</summary>\n
+            \`\`\`
+            ${process.env.UNIT_TEST_RESULTS}
+            \`\`\`\n
+            </details>\n
+            Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\``;
+
+            const title = `Unit Tests ${{ needs.buildtest.outputs.test_outcome }}`
+
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['bug'],
+              assignees: [context.actor]
+            })
+
+      # break the workflow
+      - name: "Unit Tests Status"
+        env:
+          UNIT_TEST_RESULTS: "${{ needs.buildtest.outputs.test_results }}"
+        run: |
+          echo "${{ env.UNIT_TEST_RESULTS }}"
+          exit 1
+
+  reportprcomment:
+    name: "Report to PR comment fo PR runs"
+    needs: buildtest
+    if: needs.buildtest.outputs.test_outcome == 'failure' && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Create a PR comment"
+        uses: actions/github-script@v5.0.0
+        env:
+          UNIT_TEST_RESULTS: "${{ needs.buildtest.outputs.test_results }}"
+        with:
+          script: |
+            const body = `#### Unit Tests \`${{ needs.buildtest.outputs.test_outcome }}\`
+            <details>
+            <summary>Details</summary>\n
+            \`\`\`
+            ${process.env.UNIT_TEST_RESULTS}
+            \`\`\`\n
+            </details>\n
+            Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\``;
+
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            })
+
+      # break the workflow
+      - name: "Unit Tests Status"
+        env:
+          UNIT_TEST_RESULTS: "${{ needs.buildtest.outputs.test_results }}"
+        run: |
+          echo "${{ env.UNIT_TEST_RESULTS }}"
+          exit 1
