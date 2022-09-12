@@ -19,14 +19,13 @@ env:
   # RESOURCES_PREFIX: "" # hardcoded or dynamic based on repo name
   # LOCATION: "" # hardcoded or get from secrets
 
-
+# Set defaults for GitHub Actions runner
+defaults:
+  run:
+    working-directory: "iac/terraform"
 
 jobs:
   preview:
-    # Set defaults for GitHub Actions runner
-    defaults:
-      run:
-        working-directory: "iac/terraform"
     name: "Preview Changes"
     runs-on: ubuntu-latest
     outputs:
