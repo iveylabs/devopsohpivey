@@ -122,7 +122,7 @@ jobs:
             })
             
       # break the workflow
-      - name: "Unit Tests Status"
+      - name: "Fail workflow"
         env:
           UNIT_TEST_RESULTS: "${{ needs.buildtest.outputs.test_results }}"
         run: |
@@ -159,7 +159,7 @@ jobs:
             })
 
       # break the workflow
-      - name: "Unit Tests Status"
+      - name: "Fail workflow"
         env:
           UNIT_TEST_RESULTS: "${{ needs.buildtest.outputs.test_results }}"
         run: |
