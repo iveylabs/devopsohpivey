@@ -14,7 +14,7 @@ namespace UnitTests.ControllerTests
             //explicitly set this to null as to clear any previous state
             Environment.SetEnvironmentVariable("APP_VERSION",null);             
             var controller = new VersionController();
-            var defaultValue = "default";
+            var defaultValue = "test";
 
             //act
             var result = controller.GetVersion();
