@@ -1,1 +1,1 @@
-Testing PR validation
+Testing PR deployment with summary job.
