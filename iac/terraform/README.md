@@ -1,1 +1,1 @@
-Testing PR deployment with summary job.
+Testing PR deployment with a summary job.
