@@ -16,7 +16,7 @@ env:
   ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
   ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
   WORKDIR: "iac/terraform"
-  # RESOURCES_PREFIX: "" # hardcoded or dynamic based on repo name
+  RESOURCES_PREFIX: "piveyterraform" # hardcoded or dynamic based on repo name
   # LOCATION: "" # hardcoded or get from secrets
 
 # Set defaults for GitHub Actions runner
@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       TFPLAN_EXITCODE: ${{ steps.tfplan.outputs.exitcode }}
-      RESOURCES_PREFIX: ${{ steps.resources_prefix.outputs.result }}
+#       RESOURCES_PREFIX: ${{ steps.resources_prefix.outputs.result }}
 
     steps:
       # Checkout the repository to the GitHub Actions runner
@@ -38,12 +38,12 @@ jobs:
         uses: actions/checkout@v2
 
       # Get RESOURCES_PREFIX based on the repo name
-      - name: Get repo name
-        uses: actions/github-script@v5
-        id: resources_prefix
-        with:
-          result-encoding: string
-          script: return context.repo.repo.toLowerCase()
+#       - name: Get repo name
+#         uses: actions/github-script@v5
+#         id: resources_prefix
+#         with:
+#           result-encoding: string
+#           script: return context.repo.repo.toLowerCase()
 
       # Install the latest version of Terraform CLI
       - name: Setup Terraform
