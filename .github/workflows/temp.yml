@@ -14,7 +14,7 @@ env:
   DOTNET_VERSION: "3.1.x"
   WORKDIR: "apis/poi"
 
-permissions: write-all
+permissions: read-all
 
 # Set defaults for GitHub Actions runner
 defaults:
