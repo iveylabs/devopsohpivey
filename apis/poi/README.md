@@ -1,4 +1,3 @@
-Testing CI/CD
 # POI Service
 
 ## Overview
