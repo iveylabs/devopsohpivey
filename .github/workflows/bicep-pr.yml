@@ -69,7 +69,7 @@ jobs:
         id: validate
               
       - name: Update Pull Request
-        uses: actions/github-script@v6.2.0
+        uses: actions/github-script@v7.0.1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
