@@ -77,9 +77,9 @@ jobs:
             const output = `#### Bicep Lint 🖌\`${{ steps.lint.outcome }}\`
             #### Bicep Validation 🤖\`${{ steps.validate.outcome }}\`
             *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
+            github.rest.pulls.createReviewComment({
+              pull_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: output
-            })
+            });
