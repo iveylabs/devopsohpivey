@@ -1,9 +1,4 @@
 param resourcesPrefix string
-param sqlServerAdminLogin string
-@secure()
-param sqlServerAdminPassword string
-param sqlServerFqdn string
-param sqlDatabaseName string
 param containerRegistryLoginServer string
 param containerRegistryAdminUsername string
 @secure()
@@ -53,22 +48,6 @@ resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2021-09-01'
         name: 'simulator'
         properties: {
           environmentVariables: [
-            {
-              name: 'SQL_SERVER'
-              value: sqlServerFqdn
-            }
-            {
-              name: 'SQL_USER'
-              value: sqlServerAdminLogin
-            }
-            {
-              name: 'SQL_PASSWORD'
-              secureValue: sqlServerAdminPassword
-            }
-            {
-              name: 'SQL_DBNAME'
-              value: sqlDatabaseName
-            }
             {
               name: 'TEAM_NAME'
               value: resourcesPrefix
