@@ -1,7 +1,4 @@
 param resourcesPrefix string
-param sqlServerFqdn string
-param sqlServerName string
-param sqlServerAdminPassword string
 param containerRegistryLoginServer string
 param containerRegistryName string
 param userAssignedManagedIdentityId string
@@ -13,20 +10,6 @@ var varfile = json(loadTextContent('./variables.json'))
 // https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles
 // Contributor
 var contributorRoleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')
-
-resource sqlServer 'Microsoft.Sql/servers@2021-02-01-preview' existing = {
-  name: sqlServerName
-}
-
-// https://docs.microsoft.com/en-us/azure/templates/microsoft.authorization/roleassignments?tabs=bicep
-resource sqlContributorRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = {
-  name: guid(resourceGroup().id, sqlServer.id, userAssignedManagedIdentityId, contributorRoleDefinitionId)
-  scope: sqlServer
-  properties: {
-    roleDefinitionId: contributorRoleDefinitionId
-    principalId: userAssignedManagedIdentityPrincipalId
-  }
-}
 
 // https://docs.microsoft.com/en-us/azure/templates/microsoft.resources/deploymentscripts?tabs=bicep
 resource dataInit 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
@@ -48,26 +31,6 @@ resource dataInit 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
     scriptContent: loadTextContent('datainit.sh')
     environmentVariables: [
       {
-        name: 'SQL_SERVER_NAME'
-        value: sqlServerName
-      }
-      {
-        name: 'SQL_SERVER_FQDN'
-        value: sqlServerFqdn
-      }
-      {
-        name: 'SQL_ADMIN_LOGIN'
-        value: varfile.sqlServerAdminLogin
-      }
-      {
-        name: 'SQL_ADMIN_PASSWORD'
-        secureValue: sqlServerAdminPassword
-      }
-      {
-        name: 'SQL_DB_NAME'
-        value: 'mydrivingDB'
-      }
-      {
         name: 'RESOURCE_GROUP'
         value: resourceGroup().name
       }
@@ -83,9 +46,6 @@ resource dataInit 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
     retentionInterval: 'PT1H'
     timeout: 'PT15M'
   }
-  dependsOn: [
-    sqlContributorRoleAssignment
-  ]
 }
 
 // https://docs.microsoft.com/en-us/azure/templates/microsoft.containerregistry/registries?tabs=bicep

@@ -1,9 +1,4 @@
 param resourcesPrefix string
-param sqlServerAdminLogin string
-@secure()
-param sqlServerAdminPassword string
-param sqlServerFqdn string
-param sqlDatabaseName string
 param containerRegistryLoginServer string
 param containerRegistryName string
 param containerRegistryAdminUsername string
@@ -155,23 +150,6 @@ resource appServiceApiPoi 'Microsoft.Web/sites@2021-02-01' = {
       healthCheckPath: '/api/healthcheck/poi'
       appSettings: [
         {
-          name: 'SQL_USER'
-          value: sqlServerAdminLogin
-        }
-        {
-          name: 'SQL_PASSWORD'
-          value: sqlServerAdminPassword
-          //value: '@Microsoft.KeyVault(VaultName=${keyVault.name};SecretName=SQL-PASSWORD)' // for Key Vault integration
-        }
-        {
-          name: 'SQL_SERVER'
-          value: sqlServerFqdn
-        }
-        {
-          name: 'SQL_DBNAME'
-          value: sqlDatabaseName
-        }
-        {
           name: 'WEBSITES_PORT'
           value: '8080'
         }
@@ -254,23 +232,6 @@ resource appServiceApiPoiStaging 'Microsoft.Web/sites/slots@2021-02-01' = {
       healthCheckPath: '/api/healthcheck/poi'
       appSettings: [
         {
-          name: 'SQL_USER'
-          value: sqlServerAdminLogin
-        }
-        {
-          name: 'SQL_PASSWORD'
-          value: sqlServerAdminPassword
-          //value: '@Microsoft.KeyVault(VaultName=${keyVault.name};SecretName=SQL-PASSWORD)' // for Key Vault integration
-        }
-        {
-          name: 'SQL_SERVER'
-          value: sqlServerFqdn
-        }
-        {
-          name: 'SQL_DBNAME'
-          value: sqlDatabaseName
-        }
-        {
           name: 'WEBSITES_PORT'
           value: '8080'
         }
@@ -352,22 +313,6 @@ resource appServiceApiTrips 'Microsoft.Web/sites@2021-02-01' = {
       healthCheckPath: '/api/healthcheck/trips'
       appSettings: [
         {
-          name: 'SQL_USER'
-          value: sqlServerAdminLogin
-        }
-        {
-          name: 'SQL_PASSWORD'
-          value: sqlServerAdminPassword
-        }
-        {
-          name: 'SQL_SERVER'
-          value: sqlServerFqdn
-        }
-        {
-          name: 'SQL_DBNAME'
-          value: sqlDatabaseName
-        }
-        {
           name: 'DOCKER_REGISTRY_SERVER_URL'
           value: 'https://${containerRegistryLoginServer}'
         }
@@ -424,22 +369,6 @@ resource appServiceApiTripsStaging 'Microsoft.Web/sites/slots@2021-02-01' = {
       healthCheckPath: '/api/healthcheck/trips'
       appSettings: [
         {
-          name: 'SQL_USER'
-          value: sqlServerAdminLogin
-        }
-        {
-          name: 'SQL_PASSWORD'
-          value: sqlServerAdminPassword
-        }
-        {
-          name: 'SQL_SERVER'
-          value: sqlServerFqdn
-        }
-        {
-          name: 'SQL_DBNAME'
-          value: sqlDatabaseName
-        }
-        {
           name: 'DOCKER_REGISTRY_SERVER_URL'
           value: 'https://${containerRegistryLoginServer}'
         }
@@ -494,22 +423,6 @@ resource appServiceApiUserJava 'Microsoft.Web/sites@2021-02-01' = {
       linuxFxVersion: 'DOCKER|${containerRegistryLoginServer}/devopsoh/api-user-java:${apiUserJavaBaseImageTag}'
       healthCheckPath: '/api/healthcheck/user-java'
       appSettings: [
-        {
-          name: 'SQL_USER'
-          value: sqlServerAdminLogin
-        }
-        {
-          name: 'SQL_PASSWORD'
-          value: sqlServerAdminPassword
-        }
-        {
-          name: 'SQL_SERVER'
-          value: sqlServerFqdn
-        }
-        {
-          name: 'SQL_DBNAME'
-          value: sqlDatabaseName
-        }
         {
           name: 'DOCKER_REGISTRY_SERVER_URL'
           value: 'https://${containerRegistryLoginServer}'
@@ -567,22 +480,6 @@ resource appServiceApiUserJavaStaging 'Microsoft.Web/sites/slots@2021-02-01' = {
       healthCheckPath: '/api/healthcheck/user-java'
       appSettings: [
         {
-          name: 'SQL_USER'
-          value: sqlServerAdminLogin
-        }
-        {
-          name: 'SQL_PASSWORD'
-          value: sqlServerAdminPassword
-        }
-        {
-          name: 'SQL_SERVER'
-          value: sqlServerFqdn
-        }
-        {
-          name: 'SQL_DBNAME'
-          value: sqlDatabaseName
-        }
-        {
           name: 'DOCKER_REGISTRY_SERVER_URL'
           value: 'https://${containerRegistryLoginServer}'
         }
@@ -639,22 +536,6 @@ resource appServiceApiUserprofile 'Microsoft.Web/sites@2021-02-01' = {
       healthCheckPath: '/api/healthcheck/user'
       appSettings: [
         {
-          name: 'SQL_USER'
-          value: sqlServerAdminLogin
-        }
-        {
-          name: 'SQL_PASSWORD'
-          value: sqlServerAdminPassword
-        }
-        {
-          name: 'SQL_SERVER'
-          value: sqlServerFqdn
-        }
-        {
-          name: 'SQL_DBNAME'
-          value: sqlDatabaseName
-        }
-        {
           name: 'DOCKER_REGISTRY_SERVER_URL'
           value: 'https://${containerRegistryLoginServer}'
         }
@@ -710,22 +591,6 @@ resource appServiceApiUserprofileStaging 'Microsoft.Web/sites/slots@2021-02-01' 
       linuxFxVersion: 'DOCKER|${containerRegistryLoginServer}/devopsoh/api-userprofile:${apiUserprofileBaseImageTag}'
       healthCheckPath: '/api/healthcheck/user'
       appSettings: [
-        {
-          name: 'SQL_USER'
-          value: sqlServerAdminLogin
-        }
-        {
-          name: 'SQL_PASSWORD'
-          value: sqlServerAdminPassword
-        }
-        {
-          name: 'SQL_SERVER'
-          value: sqlServerFqdn
-        }
-        {
-          name: 'SQL_DBNAME'
-          value: sqlDatabaseName
-        }
         {
           name: 'DOCKER_REGISTRY_SERVER_URL'
           value: 'https://${containerRegistryLoginServer}'
