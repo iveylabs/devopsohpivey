@@ -7,7 +7,6 @@ param apiPoiBaseImageTag string = ''
 param apiTripsBaseImageTag string = ''
 param apiUserJavaBaseImageTag string = ''
 param apiUserprofileBaseImageTag string = ''
-param sqlServerAdminPassword string = ''
 
 var varfile = json(loadTextContent('./variables.json'))
 var resourcesPrefixCalculated = empty(resourcesPrefix) ? '${varfile.namePrefix}${uniquer}' : resourcesPrefix
@@ -17,8 +16,6 @@ var apiPoiBaseImageTagCalculated = empty(apiPoiBaseImageTag) ? varfile.baseImage
 var apiTripsBaseImageTagCalculated = empty(apiTripsBaseImageTag) ? varfile.baseImageTag : apiTripsBaseImageTag
 var apiUserJavaBaseImageTagCalculated = empty(apiUserJavaBaseImageTag) ? varfile.baseImageTag : apiUserJavaBaseImageTag
 var apiUserprofileBaseImageTagCalculated = empty(apiUserprofileBaseImageTag) ? varfile.baseImageTag : apiUserprofileBaseImageTag
-
-var sqlServerAdminPasswordCalculated = empty(sqlServerAdminPassword) ? varfile.sqlServerAdminPassword : sqlServerAdminPassword
 
 module openhackResourceGroup './resourceGroup.bicep' = {
   name: '${resourcesPrefixCalculated}-resourceGroupDeployment'
@@ -51,21 +48,6 @@ module containerRegistry './containerRegistry.bicep' = {
   ]
 }
 
-module sqlServer './sqlServer.bicep' = {
-  name: 'sqlServerDeployment'
-  params: {
-    resourcesPrefix: resourcesPrefixCalculated
-    sqlServerAdminPassword: sqlServerAdminPasswordCalculated
-    logAnalyticsWorkspaceName: logAnalytics.outputs.logAnalyticsWorkspaceName
-  }
-  scope: resourceGroup(resourceGroupName)
-  dependsOn: [
-    openhackResourceGroup
-    managedIdentity
-    logAnalytics
-  ]
-}
-
 module appInsights './appInsights.bicep' = {
   name: 'appInsightsDeployment'
   params: {
@@ -81,10 +63,6 @@ module appService './appService.bicep' = {
   name: 'appServiceDeployment'
   params: {
     resourcesPrefix: resourcesPrefixCalculated
-    sqlServerFqdn: sqlServer.outputs.sqlServerFqdn
-    sqlServerAdminLogin: sqlServer.outputs.sqlServerAdminLogin
-    sqlServerAdminPassword: sqlServerAdminPasswordCalculated
-    sqlDatabaseName: sqlServer.outputs.sqlDatabaseName
     containerRegistryLoginServer: containerRegistry.outputs.containerRegistryLoginServer
     containerRegistryName: containerRegistry.outputs.containerRegistryName
     // userAssignedManagedIdentityId: managedIdentity.outputs.userAssignedManagedIdentityId
@@ -104,7 +82,6 @@ module appService './appService.bicep' = {
   scope: resourceGroup(resourceGroupName)
   dependsOn: [
     containerRegistry
-    sqlServer
     apps
     appInsights
   ]
@@ -114,9 +91,6 @@ module apps './apps.bicep' = {
   name: 'appsDeployment'
   params: {
     resourcesPrefix: resourcesPrefixCalculated
-    sqlServerFqdn: sqlServer.outputs.sqlServerFqdn
-    sqlServerName: sqlServer.outputs.sqlServerName
-    sqlServerAdminPassword: sqlServerAdminPasswordCalculated
     containerRegistryLoginServer: containerRegistry.outputs.containerRegistryLoginServer
     containerRegistryName: containerRegistry.outputs.containerRegistryName
     userAssignedManagedIdentityId: managedIdentity.outputs.userAssignedManagedIdentityId
@@ -124,7 +98,6 @@ module apps './apps.bicep' = {
   }
   scope: resourceGroup(resourceGroupName)
   dependsOn: [
-    sqlServer
     containerRegistry
     managedIdentity
   ]
@@ -145,10 +118,6 @@ module containerGroup './containerGroup.bicep' = {
   name: 'containerGroupDeployment'
   params: {
     resourcesPrefix: resourcesPrefixCalculated
-    sqlServerFqdn: sqlServer.outputs.sqlServerFqdn
-    sqlServerAdminLogin: sqlServer.outputs.sqlServerAdminLogin
-    sqlServerAdminPassword: sqlServerAdminPasswordCalculated
-    sqlDatabaseName: sqlServer.outputs.sqlDatabaseName
     containerRegistryLoginServer: containerRegistry.outputs.containerRegistryLoginServer
     // containerRegistryName: containerRegistry.outputs.containerRegistryName
     containerRegistryAdminUsername: containerRegistry.outputs.containerRegistryAdminUsername
@@ -165,7 +134,6 @@ module containerGroup './containerGroup.bicep' = {
   scope: resourceGroup(resourceGroupName)
   dependsOn: [
     containerRegistry
-    sqlServer
     appService
     apps
     logAnalytics
@@ -177,9 +145,6 @@ module keyVault './keyVault.bicep' = {
   params: {
     resourcesPrefix: resourcesPrefixCalculated
     containerRegistryAdminPassword: containerRegistry.outputs.containerRegistryAdminPassword
-    sqlServerAdminLogin: sqlServer.outputs.sqlServerAdminLogin
-    sqlServerAdminPassword: sqlServerAdminPasswordCalculated
-    sqlServerId: sqlServer.outputs.sqlServerId
   }
   scope: resourceGroup(resourceGroupName)
   dependsOn: [
